@@ -5,17 +5,33 @@ pipeline {
         stage('Variables Demo') {
             steps {
                 script {
-                    // Создаем переменные разных типов
                     def appName = "MyApplication"
                     def port = 8080
                     def isProduction = false
 
-                    // Выводим их через интерполяцию строк
                     echo "Application Name: ${appName}"
                     echo "Server Port: ${port}"
                     echo "Production Mode: ${isProduction}"
                 }
             }
         }
+	
+
+	stage('String Operations') {
+            steps {
+                script {
+                    def message = "Jenkins Pipeline Tutorial"
+                    
+                    echo "Original: ${message}"
+                    echo "String Length: ${message.length()}"
+                    echo "Uppercase: ${message.toUpperCase()}"
+                    echo "Lowercase: ${message.toLowerCase()}"
+                    
+                    // Заменяем слово и выводим результат
+                    def newMessage = message.replace("Tutorial", "Course")
+                    echo "Modified: ${newMessage}"
+                }
+            }
+        }	
     }
 }
