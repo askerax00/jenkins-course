@@ -2,95 +2,110 @@ pipeline {
     agent any
 
     stages {
-        stage('Variables Demo') {
+        stage('Preparation') {
             steps {
-                script {
-                    def appName = "MyApplication"
-                    def port = 8080
-                    def isProduction = false
-
-                    echo "Application Name: ${appName}"
-                    echo "Server Port: ${port}"
-                    echo "Production Mode: ${isProduction}"
-                }
-            }
-        }
-	
-
-	stage('String Operations') {
-            steps {
-                script {
-                    def message = "Jenkins Pipeline Tutorial"
-                    
-                    echo "Original: ${message}"
-                    echo "String Length: ${message.length()}"
-                    echo "Uppercase: ${message.toUpperCase()}"
-                    echo "Lowercase: ${message.toLowerCase()}"
-                    
-                    // Заменяем слово и выводим результат
-                    def newMessage = message.replace("Tutorial", "Course")
-                    echo "Modified: ${newMessage}"
-                }
+                echo "Starting WebStore CI/CD Pipeline"
+                sh 'mkdir -p build test-reports artifacts'
+                sh 'date'
+                echo "Node: ${env.NODE_NAME}"
+                echo "Workspace: ${env.WORKSPACE}"
             }
         }
 
-
-	stage('Build Version') {
+        stage('Generate Version') {
             steps {
                 script {
-                    def major = '1'
-                    def minor = '0'
+                    def major = '2'
+                    def minor = '1'
                     def patch = env.BUILD_NUMBER
-                    env.APP_VERSION = "${major}.${minor}.${patch}"
+                    
+                    def commitHash = "local"
+                    if (env.GIT_COMMIT) {
+                        commitHash = env.GIT_COMMIT.take(7)
+                    }
+                    
+                    env.APP_VERSION = "${major}.${minor}.${patch}-${commitHash}"
                     echo "Application version: ${env.APP_VERSION}"
                 }
             }
         }
 
-	stage('Display Version') {
+       
+        stage('Build Application') {
             steps {
                 script {
-                    // Используем переменную, которую создали в прошлом стейдже
-                    echo "Using version: ${env.APP_VERSION}"
+                    echo "Building WebStore version ${env.APP_VERSION}"
                     
-                    def imageName = "myapp:${env.APP_VERSION}"
-                    echo "Docker image would be: ${imageName}"
+                    writeFile file: 'build/version.txt', text: env.APP_VERSION
+                    writeFile file: 'build/app.jar', text: "WebStore Application Binary"
+                    
+                    sh 'ls -la build/'
+                    echo "Build completed successfully"
                 }
             }
         }
 
-	stage('Jenkins Info') {
+        stage('Unit Tests') {
+            steps {
+                echo "Running unit tests..."
+                writeFile file: 'test-reports/unit-tests.xml', text: "Unit tests: PASSED"
+                sleep 2
+                echo "Unit tests completed"
+            }
+        }
+
+        
+        stage('Integration Tests') {
+            steps {
+                echo "Running integration tests..."
+                writeFile file: 'test-reports/integration-tests.xml', text: "Integration tests: PASSED"
+                sleep 3
+                echo "Integration tests completed"
+            }
+        }
+
+       
+        stage('Package Artifacts') {
             steps {
                 script {
+                    def artifactName = "webstore-${env.APP_VERSION}.tar.gz"
+                    echo "Creating artifact: ${artifactName}"
+                    
+                    
+                    sh "tar -czf artifacts/${artifactName} build/ test-reports/"
+                    
+                    sh "ls -lh artifacts/"
+                    echo "Artifact ready for deployment"
+                }
+            }
+        }
+
+        stage('Summary') {
+            steps {
+                script {
+                    echo "=== Build Summary ==="
+                    echo "Application: WebStore"
+                    echo "Version: ${env.APP_VERSION}"
                     echo "Build Number: ${env.BUILD_NUMBER}"
-                    echo "Build ID: ${env.BUILD_ID}"
-                    echo "Job Name: ${env.JOB_NAME}"
-                    echo "Workspace: ${env.WORKSPACE}"
                     echo "Build URL: ${env.BUILD_URL}"
+                    echo "Status: SUCCESS"
+                    echo "=== End of Pipeline ==="
+                    sh 'ls -laR'
                 }
             }
         }
 
-	stage('Generate Config') {
-   	     steps {
-        	script {
-            	    def config = """
-app:
-  name: ${env.APP_VERSION}
-  port: 8080
-
-build:
-  number: ${env.BUILD_NUMBER}
-  date: ${new Date()}
-"""
-            	    echo "Generated config:"
-                    echo config
-
-                    writeFile file: 'config.yaml', text: config
-                    sh 'cat config.yaml'
-                }
+       
+        stage('Cleanup') {
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            
+            steps {
+                echo "Cleaning up temporary directories..."
+                sh 'rm -rf build test-reports'
+                echo "Cleanup completed. Remaining files:"
+                sh 'ls -lhR artifacts/'
             }
         }
-	
     }
 }
