@@ -1,53 +1,49 @@
 pipeline {
-    agent any
+    agent none
     stages {
-        stage('Prepare') {
+        stage('Check Agent') {
+            agent any
             steps {
-                echo "Preparing workspace..."
-                sh 'mkdir -p build logs temp'
-                echo "Directories created"
-            }
-        }
-	
-	stage('Build') {
-            steps {
-                echo "Building application..."
-                sh 'echo "Build version: 1.0.0" > build/version.txt'
-                sh 'date >> build/version.txt'
-                echo "Build completed"
+                echo "Running on agent..."
+                sh 'hostname'
+                echo "Workspace path: ${env.WORKSPACE}"
+                echo "Node name: ${env.NODE_NAME}"
             }
         }
 
-	stage('Verify') {
+        stage('Build Info') {
+            agent any
             steps {
-                echo "Verifying build..."
-                sh 'cat build/version.txt'
-                sh 'ls -la build/'
-                echo "Verification completed"
+                echo "Build information..."
+                echo "Build Number: ${env.BUILD_NUMBER}"
+                echo "Build ID: ${env.BUILD_ID}"
+                echo "Build URL: ${env.BUILD_URL}"
             }
         }
 
-	stage('System Info') {
+        stage('System Details') {
+            agent any
             steps {
-                echo "=== System Information ===" // 1
-                echo "Checking current user..."   // 2
-                sh 'whoami'                       // sh 1
-                echo "Checking disk space..."     // 3
-                sh 'df -h .'                      // sh 2
-                echo "Build Number: ${env.BUILD_NUMBER}" // 4
-                echo "Job Name: ${env.JOB_NAME}"         // 5
-                sh 'uptime'                       // sh 3
+                echo "=== System Details Stage ==="
+                sh 'uname -a'
+                sh 'whoami'
+                sh 'pwd'               
+                sh 'ls -la'               
+                sh 'free -h || echo "Memory check skipped"'
+                sh 'date'
             }
-         }
+        }
 
-	stage('Cleanup') {
-	    steps {
-        	echo 'Cleaning up temporary files...'
-        	sh 'rm -rf temp logs'
-        	sh 'ls -la'
-        	echo 'Cleanup completed'
-    }
-}
-
+        // Возвращаем стейдж с конкретной меткой
+        stage('Specific Agent') {
+            agent { 
+                label 'linux' 
+            }
+            steps {
+                echo "Running on agent with label 'linux'"
+                sh 'uname -a'
+                echo "This stage successfully found a node with the 'linux' label."
+            }
+        }
     }
 }
