@@ -18,27 +18,22 @@ pipeline {
                     def major = '2'
                     def minor = '1'
                     def patch = env.BUILD_NUMBER
-                    
                     def commitHash = "local"
                     if (env.GIT_COMMIT) {
                         commitHash = env.GIT_COMMIT.take(7)
                     }
-                    
                     env.APP_VERSION = "${major}.${minor}.${patch}-${commitHash}"
                     echo "Application version: ${env.APP_VERSION}"
                 }
             }
         }
 
-       
         stage('Build Application') {
             steps {
                 script {
                     echo "Building WebStore version ${env.APP_VERSION}"
-                    
                     writeFile file: 'build/version.txt', text: env.APP_VERSION
                     writeFile file: 'build/app.jar', text: "WebStore Application Binary"
-                    
                     sh 'ls -la build/'
                     echo "Build completed successfully"
                 }
@@ -54,7 +49,6 @@ pipeline {
             }
         }
 
-        
         stage('Integration Tests') {
             steps {
                 echo "Running integration tests..."
@@ -64,16 +58,12 @@ pipeline {
             }
         }
 
-       
         stage('Package Artifacts') {
             steps {
                 script {
                     def artifactName = "webstore-${env.APP_VERSION}.tar.gz"
                     echo "Creating artifact: ${artifactName}"
-                    
-                    
                     sh "tar -czf artifacts/${artifactName} build/ test-reports/"
-                    
                     sh "ls -lh artifacts/"
                     echo "Artifact ready for deployment"
                 }
@@ -95,11 +85,10 @@ pipeline {
             }
         }
 
-       
         stage('Cleanup') {
             when {
                 expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
-            
+            }
             steps {
                 echo "Cleaning up temporary directories..."
                 sh 'rm -rf build test-reports'
