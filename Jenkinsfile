@@ -69,6 +69,28 @@ pipeline {
                     echo "Build URL: ${env.BUILD_URL}"
                 }
             }
-        }	
+        }
+
+	stage('Generate Config') {
+   	     steps {
+        	script {
+            	    def config = """
+app:
+  name: ${env.APP_VERSION}
+  port: 8080
+
+build:
+  number: ${env.BUILD_NUMBER}
+  date: ${new Date()}
+"""
+            	    echo "Generated config:"
+                    echo config
+
+                    writeFile file: 'config.yaml', text: config
+                    sh 'cat config.yaml'
+                }
+            }
+        }
+	
     }
 }
