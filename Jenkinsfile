@@ -58,4 +58,24 @@ pipeline {
             }
         }
 
+	stage('Security Scan') {
+            when {
+                allOf {
+                    anyOf {
+                        branch 'main'
+                        branch 'develop'
+                        branch 'lesson-when-conditions' 
+                    }
+                    anyOf {
+                        environment name: 'DEPLOY_ENV', value: 'staging'
+                        environment name: 'DEPLOY_ENV', value: 'production'
+                    }
+                }
+            }
+            steps {
+                echo "Running security scan"
+                echo "Branch: ${env.BRANCH_NAME}, Environment: ${env.DEPLOY_ENV}"
+            }
+        }
+
 }
