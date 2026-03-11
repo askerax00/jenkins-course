@@ -78,4 +78,17 @@ pipeline {
             }
         }
 
-}
+	
+	stage('Summary') {
+            steps {
+                echo "=== Pipeline Execution Summary ==="
+                echo "Branch: ${env.BRANCH_NAME ?: 'unknown'}"
+                echo "Build Number: ${env.BUILD_NUMBER}"
+                echo "Deploy Environment: ${env.DEPLOY_ENV}"
+                echo "All stages completed"
+            }
+        }
+    }
+}	
+   
+
