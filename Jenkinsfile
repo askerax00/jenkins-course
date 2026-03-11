@@ -88,6 +88,19 @@ pipeline {
                 echo "All stages completed"
             }
         }
+
+	stage('Weekend Task') {
+	    when {
+        	expression {
+            	    def day = new Date().format('EEEE')
+            	    return day == 'Saturday' || day == 'Sunday'
+       		 }
+    	    }
+    	    steps {
+                echo "This is a weekend build!"
+        	echo "Day: ${new Date().format('EEEE, MMMM dd, yyyy')}"
+   	 }
+        }
     }
 }	
    
