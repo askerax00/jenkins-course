@@ -22,4 +22,20 @@ pipeline {
             }
         }
 
+	stage('Deploy to Staging') {
+            when { environment name: 'DEPLOY_ENV', value: 'staging' }
+            steps {
+                echo "Deploying to staging environment"
+                echo "Environment: ${env.DEPLOY_ENV}"
+            }
+        }
+
+	stage('Deploy to Production (by env)') {
+            when { environment name: 'DEPLOY_ENV', value: 'production' }
+            steps {
+                echo "Deploying to production environment"
+                echo "Environment: ${env.DEPLOY_ENV}"
+            }
+        }
+
 }
