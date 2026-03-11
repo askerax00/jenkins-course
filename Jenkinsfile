@@ -38,4 +38,24 @@ pipeline {
             }
         }
 
+	stage('Run Tests') {
+            when {
+                expression { return env.BUILD_NUMBER.toInteger() % 2 == 0 }
+            }
+            steps {
+                echo "Running tests for build ${env.BUILD_NUMBER}"
+                echo "This is an even-numbered build"
+            }
+        }
+
+        stage('Skip Tests') {
+            when {
+                expression { return env.BUILD_NUMBER.toInteger() % 2 != 0 }
+            }
+            steps {
+                echo "Skipping tests for build ${env.BUILD_NUMBER}"
+                echo "This is an odd-numbered build"
+            }
+        }
+
 }
