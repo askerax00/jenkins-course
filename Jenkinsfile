@@ -90,5 +90,27 @@ pipeline {
                 }
             }
         }
+
+	stage('Transform List') {
+   	    steps {
+		script {
+            	    def servers = ['web1', 'web2', 'web3']
+
+            // Добавляем суффикс .example.com к каждому серверу
+            	    def fullNames = servers.collect { server ->
+                	"${server}.example.com"
+            }
+
+           	     echo "Original: ${servers}"
+            	     echo "Transformed: ${fullNames}"
+
+            // Итерация по трансформированному списку
+           	     fullNames.each { name ->
+                	echo "Full name: ${name}"
+                } 
+            }
+        }
+    }
+
     }
 }
