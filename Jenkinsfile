@@ -1,15 +1,20 @@
 pipeline {
     agent any
+
     stages {
         stage('List Basics') {
             steps {
                 script {
                     def environments = ['dev', 'staging', 'production']
+                    echo "First element: ${environments[0]}"
+                    echo "Last element: ${environments[-1]}"
                     echo "Size: ${environments.size()}"
                     environments.add('qa')
+                    echo "Updated size: ${environments.size()}"
                 }
             }
         }
+
         stage('Deploy to Servers') {
             steps {
                 script {
@@ -19,6 +24,26 @@ pipeline {
                         sleep 1
                         echo "Deployment to ${server} completed"
                     }
+                }
+            }
+        }
+
+        stage('Configuration Map') {
+            steps {
+                script {
+                    def config = [
+                        'appName': 'MyWebApp',
+                        'version': '2.0.0',
+                        'port': 8080,
+                        'environment': 'production'
+                    ]
+                    echo "App Name: ${config.appName}"
+                    echo "Version: ${config.version}"
+                    echo "Port: ${config.port}"
+                    echo "Env: ${config.environment}"
+                    echo "Map size: ${config.size()}"
+                    config['region'] = 'us-east-1'
+                    echo "Full Map: ${config}"
                 }
             }
         }
