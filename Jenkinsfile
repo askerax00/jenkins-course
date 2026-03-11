@@ -79,5 +79,16 @@ pipeline {
                 }
             }
         }
+	
+	stage('Filter Environments') {
+            steps {
+                script {
+                    def allEnvs = ['dev', 'test', 'staging', 'prod', 'backup']
+                    def activeEnvs = allEnvs.findAll { it != 'backup' }
+                    echo "Active environments:"
+                    activeEnvs.each { echo it }
+                }
+            }
+        }
     }
 }
