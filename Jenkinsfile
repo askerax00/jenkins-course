@@ -53,5 +53,11 @@ pipeline {
             echo "Build Number: ${env.BUILD_NUMBER}"
             echo "Check console output for details"
         }
+	cleanup {
+            echo "=== Cleanup Phase ==="
+            echo "Removing temporary files..."
+            sh 'mkdir -p temp && rm -rf temp'
+            echo "Cleanup completed"
+        }
     }
 }
