@@ -1,12 +1,17 @@
 pipeline {
     agent any
+
     stages {
         stage('Build') {
             steps {
                 echo "Building application..."
-                sh 'mkdir -p build && echo "Application binary" > build/app.jar'
+                sh '''
+                    mkdir -p build
+                    echo "Application binary" > build/app.jar
+                '''
             }
         }
+
         stage('Test') {
             steps {
                 echo "Running tests..."
@@ -14,7 +19,24 @@ pipeline {
                 echo "Tests completed"
             }
         }
+
+        stage('Deploy') {
+            steps {
+                echo "Deploying application..."
+                sleep 3
+                echo "Deployment completed"
+            }
+            // Post-блок на уровне конкретного стейджа
+            post {
+                always {
+                    echo "Deploy stage finished"
+                    sh 'ls -la build/'
+                }
+            }
+        }
     }
+
+     
     post {
         always {
             echo "=== Post Actions ==="
