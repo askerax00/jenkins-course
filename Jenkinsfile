@@ -47,6 +47,11 @@ pipeline {
             echo "✓ Build SUCCESS"
             echo "Build Number: ${env.BUILD_NUMBER}"
             echo "All stages passed successfully"
+	    sh '''
+                tar -czf build.tar.gz build/
+                ls -lh build.tar.gz
+            '''
+            echo "Artifacts archived successfully"
         }
         failure {
             echo "✗ Build FAILED"
