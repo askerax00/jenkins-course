@@ -17,7 +17,6 @@ pipeline {
                 echo "Running tests..."
                 sleep 2
                 echo "Tests completed"
-		sh 'exit 1'
             }
         }
 
