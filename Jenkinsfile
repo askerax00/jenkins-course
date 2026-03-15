@@ -23,5 +23,12 @@ pipeline {
                 echo "Deployment completed successfully"
             }
         }
+        stage('Notify Team') {
+            steps {
+                input message: "Send notification to the team?", ok: "Send Notification"
+                echo "Sending notification..."
+                echo "Notification sent to team@company.com"
+            }
+        }
     }
 }
