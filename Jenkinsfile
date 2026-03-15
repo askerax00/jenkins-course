@@ -48,5 +48,15 @@ pipeline {
                 }
             }
         }
+
+	stage('Approval with Timeout') {
+            options {
+                timeout(time: 2, unit: 'MINUTES')
+            }
+            steps {
+                input message: "Approve within 2 minutes"
+                echo "Approval received in time"
+            }
+        }
     }
 }
