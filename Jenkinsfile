@@ -58,5 +58,23 @@ pipeline {
                 echo "Approval received in time"
             }
         }
+
+	stage('Advanced Approval') {
+            steps {
+                script {
+                    def config = input(
+                        message: "Configure deployment",
+                        parameters: [
+                            string(name: 'VERSION', defaultValue: '1.0.0'),
+                            choice(name: 'ENVIRONMENT', choices: ['staging', 'production']),
+                            booleanParam(name: 'SEND_NOTIFICATION', defaultValue: true)
+                        ]
+                    )
+                    echo "Version: ${config.VERSION}"
+                    echo "Environment: ${config.ENVIRONMENT}"
+                    echo "Notification: ${config.SEND_NOTIFICATION}"
+                }
+            }
+        }
     }
 }
