@@ -1,88 +1,127 @@
 pipeline {
     agent any
+    environment {
+        PROJECT_NAME = 'CloudStore'
+        DEPLOY_ENVIRONMENT = 'staging'
+        RUN_SECURITY_SCAN = 'true'
+    }
     stages {
-        stage('Build') {
-            steps {
-                echo "Building application..."
-                sleep 2
-                echo "Build completed"
+        stage('Initialization') {
+            script {
+                echo "Starting ${PROJECT_NAME} Pipeline"
+                def services = ['auth-service', 'api-gateway', 'user-service', 'payment-service']
+                env.SERVICES = services.join(',')
+                echo "Services to build: ${env.SERVICES}"
             }
         }
-        stage('Test') {
-            steps {
-                echo "Running tests..."
-                sleep 2
-                echo "Tests passed"
+        stage('Build Services') {
+            script {
+                def serviceList = env.SERVICES.split(',')
+                for (service in serviceList) {
+                    echo "Building ${service}..."
+                    sh "mkdir -p build/${service}"
+                    sh "touch build/${service}/app.jar"
+                    sleep 1
+                    echo "Build completed for ${service}"
+                }
             }
         }
-        stage('Deploy to Production') {
+        stage('Unit Tests') {
+            when {
+                expression { return (env.BUILD_NUMBER.toInteger() % 2 != 0) }
+            }
             steps {
-                input message: "Deploy to production?"
-                echo "Deploying to production..."
+                echo "Running unit tests for build ${env.BUILD_NUMBER}"
+                sleep 2
+                echo "Unit tests passed"
+            }
+        }
+        stage('Integration Tests') {
+            when {
+                expression { return (env.BUILD_NUMBER.toInteger() % 2 == 0) }
+            }
+            steps {
+                echo "Running integration tests for build ${env.BUILD_NUMBER}"
+                sleep 2
+                echo "Integration tests passed"
+            }
+        }
+        stage('Security Scan') {
+            when {
+                environment name: 'RUN_SECURITY_SCAN', value: 'true'
+            }
+            steps {
+                echo "Running security vulnerability scan..."
                 sleep 3
-                echo "Deployment completed successfully"
+                echo "Security scan completed - no vulnerabilities found"
+            }
+            post {
+                always {
+                    echo "Security scan stage finished"
+                }
             }
         }
-        stage('Notify Team') {
-            steps {
-                input message: "Send notification to the team?", ok: "Send Notification"
-                echo "Sending notification..."
-                echo "Notification sent to team@company.com"
+        stage('Deployment Approval') {
+            when {
+                expression { return (env.DEPLOY_ENVIRONMENT == 'production' || env.DEPLOY_ENVIRONMENT == 'staging') }
             }
-        }
-        stage('Deploy Strategy') {
             steps {
                 script {
-                    def strategy = input(
-                        message: "Select deployment strategy",
-                        parameters: [choice(name: 'STRATEGY', choices: ['rolling', 'blue-green', 'canary'], description: 'Choose your method')]
-                    )
-                    echo "Selected strategy: ${strategy}"
-                    if (strategy == 'rolling') {
-                        echo "Deploying with rolling update..."
-                    } else if (strategy == 'blue-green') {
-                        echo "Deploying with blue-green strategy..."
-                    } else if (strategy == 'canary') {
-                        echo "Deploying with canary release..."
+                    timeout(time: 5, unit: 'MINUTES') {
+                        def userInput = input(
+                            id: 'approval',
+                            message: "Approve deployment to ${DEPLOY_ENVIRONMENT}?",
+                            parameters: [
+                                choice(name: 'DEPLOY_STRATEGY', choices: ['rolling', 'blue-green', 'canary'], description: 'Strategy'),
+                                booleanParam(name: 'SEND_NOTIFICATIONS', defaultValue: true, description: 'Notifications')
+                            ]
+                        )
+                        echo "Deployment strategy: ${userInput.DEPLOY_STRATEGY}"
+                        echo "Send notifications: ${userInput.SEND_NOTIFICATIONS}"
+                        env.DEPLOY_STRATEGY = userInput.DEPLOY_STRATEGY
                     }
                 }
             }
         }
-
-	stage('Approval with Timeout') {
-            options {
-                timeout(time: 2, unit: 'MINUTES')
-            }
-            steps {
-                input message: "Approve within 2 minutes"
-                echo "Approval received in time"
-            }
-        }
-
-	stage('Advanced Approval') {
-            steps {
-                script {
-                    def config = input(
-                        message: "Configure deployment",
-                        parameters: [
-                            string(name: 'VERSION', defaultValue: '1.0.0'),
-                            choice(name: 'ENVIRONMENT', choices: ['staging', 'production']),
-                            booleanParam(name: 'SEND_NOTIFICATION', defaultValue: true)
-                        ]
-                    )
-                    echo "Version: ${config.VERSION}"
-                    echo "Environment: ${config.ENVIRONMENT}"
-                    echo "Notification: ${config.SEND_NOTIFICATION}"
+        stage('Deploy Services') {
+            script {
+                def envMap = [
+                    'staging': ['stage1.example.com', 'stage2.example.com'],
+                    'production': ['prod1.example.com', 'prod2.example.com', 'prod3.example.com']
+                ]
+                def servers = envMap[env.DEPLOY_ENVIRONMENT]
+                def serviceList = env.SERVICES.split(',')
+                
+                for (server in servers) {
+                    for (service in serviceList) {
+                        echo "Deploying ${service} to ${server} using ${env.DEPLOY_STRATEGY} strategy"
+                        sleep 1
+                    }
                 }
             }
         }
-
-	stage('Summary') {
-            steps {
-                echo "=== Pipeline Completed ==="
-                echo "All approvals received"
-                echo "Build Number: ${env.BUILD_NUMBER}"
-            }
+    }
+    post {
+        always {
+            echo "=== Pipeline Execution Complete ==="
+            echo "Total build time: ${currentBuild.durationString}"
+        }
+        success {
+            echo "✓ Deployment SUCCESS"
+            echo "Project: ${PROJECT_NAME}"
+            echo "Environment: ${DEPLOY_ENVIRONMENT}"
+            echo "All services deployed successfully"
+            writeFile file: 'deployment-report.txt', text: "Project: ${PROJECT_NAME}\nEnv: ${DEPLOY_ENVIRONMENT}\nStatus: SUCCESS"
+        }
+        failure {
+            echo "✗ Deployment FAILED"
+            echo "Build Number: ${env.BUILD_NUMBER}"
+            echo "Check logs at: ${env.BUILD_URL}"
+            echo "Rolling back changes..."
+        }
+        cleanup {
+            echo "Cleaning up temporary files..."
+            echo "Cleanup completed"
         }
     }
 }
