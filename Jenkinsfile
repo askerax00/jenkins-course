@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         PROJECT_NAME = 'CloudStore'
-        DEPLOY_ENVIRONMENT = 'false'
+        DEPLOY_ENVIRONMENT = 'standing'
         RUN_SECURITY_SCAN = 'true'
     }
     stages {
