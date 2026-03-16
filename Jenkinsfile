@@ -7,22 +7,26 @@ pipeline {
     }
     stages {
         stage('Initialization') {
-            script {
-                echo "Starting ${PROJECT_NAME} Pipeline"
-                def services = ['auth-service', 'api-gateway', 'user-service', 'payment-service']
-                env.SERVICES = services.join(',')
-                echo "Services to build: ${env.SERVICES}"
+            steps {
+                script {
+                    echo "Starting ${PROJECT_NAME} Pipeline"
+                    def services = ['auth-service', 'api-gateway', 'user-service', 'payment-service']
+                    env.SERVICES = services.join(',')
+                    echo "Services to build: ${env.SERVICES}"
+                }
             }
         }
         stage('Build Services') {
-            script {
-                def serviceList = env.SERVICES.split(',')
-                for (service in serviceList) {
-                    echo "Building ${service}..."
-                    sh "mkdir -p build/${service}"
-                    sh "touch build/${service}/app.jar"
-                    sleep 1
-                    echo "Build completed for ${service}"
+            steps {
+                script {
+                    def serviceList = env.SERVICES.split(',')
+                    for (service in serviceList) {
+                        echo "Building ${service}..."
+                        sh "mkdir -p build/${service}"
+                        sh "touch build/${service}/app.jar"
+                        sleep 1
+                        echo "Build completed for ${service}"
+                    }
                 }
             }
         }
@@ -84,18 +88,20 @@ pipeline {
             }
         }
         stage('Deploy Services') {
-            script {
-                def envMap = [
-                    'staging': ['stage1.example.com', 'stage2.example.com'],
-                    'production': ['prod1.example.com', 'prod2.example.com', 'prod3.example.com']
-                ]
-                def servers = envMap[env.DEPLOY_ENVIRONMENT]
-                def serviceList = env.SERVICES.split(',')
-                
-                for (server in servers) {
-                    for (service in serviceList) {
-                        echo "Deploying ${service} to ${server} using ${env.DEPLOY_STRATEGY} strategy"
-                        sleep 1
+            steps {
+                script {
+                    def envMap = [
+                        'staging': ['stage1.example.com', 'stage2.example.com'],
+                        'production': ['prod1.example.com', 'prod2.example.com', 'prod3.example.com']
+                    ]
+                    def servers = envMap[env.DEPLOY_ENVIRONMENT]
+                    def serviceList = env.SERVICES.split(',')
+                    
+                    for (server in servers) {
+                        for (service in serviceList) {
+                            echo "Deploying ${service} to ${server} using ${env.DEPLOY_STRATEGY} strategy"
+                            sleep 1
+                        }
                     }
                 }
             }
